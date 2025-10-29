@@ -30,30 +30,81 @@ from env_settings import (
     INPUT_NORMALIZATION_DENOMINATOR
 )
 
+
+def color_from_index(idx: int, sat=92, val=92):
+    """
+    - 用黄金角打散色相，颜色分布均匀
+    - 高饱和高亮度 => 鲜明
+    - 防止出现接近黑色
+    """
+    hue = (idx * 137.5) % 360
+    c = pygame.Color(0, 0, 0, 255)
+    c.hsva = (hue, sat, val, 100)
+    rgb = (c.r, c.g, c.b)
+    # 防黑色兜底：如果太暗，就抬高亮度
+    if (rgb[0] + rgb[1] + rgb[2]) < 80:
+        c.hsva = (hue, sat, 95, 100)
+        rgb = (c.r, c.g, c.b)
+    return rgb
+
+
+
+def tint_surface_flat(src: pygame.Surface, rgb: tuple[int,int,int]) -> pygame.Surface:
+    """把非透明像素的RGB直接替换为指定颜色，保留每个像素的alpha。"""
+    tinted = src.copy()
+    w, h = tinted.get_width(), tinted.get_height()
+    # 逐像素很快，因为只有 60x60 一次性做，成本可忽略
+    px = pygame.PixelArray(tinted)
+    for y in range(h):
+        for x in range(w):
+            r,g,b,a = tinted.unmap_rgb(px[x, y]).r, tinted.unmap_rgb(px[x, y]).g, tinted.unmap_rgb(px[x, y]).b, (px.surface.get_at((x,y)).a)
+            if a != 0:
+                px[x, y] = (rgb[0], rgb[1], rgb[2], a)
+    del px
+    return tinted
+
 class Car:
 
     def __init__(
             self,
+            index: int,
             car_img: str,
             car_size_x: int,
             car_size_y: int,
             wheelbase_px: float,
             max_steer_deg: float,
-            start_position: tuple[int, int],
+            start_position: list[int, int],
             radar_max_len: int,
             v_min: float,
             v_max: float,
             start_facing_angle: int = 180
             ):
         # 载入车贴图
-        self.sprite = pygame.image.load(car_img).convert()
-        self.sprite = pygame.transform.scale(self.sprite, (car_size_x, car_size_y))
+
+        base = pygame.image.load(car_img).convert_alpha()
+        base = pygame.transform.scale(base, (car_size_x, car_size_y))
+        # self.sprite = pygame.image.load(car_img).convert()
+        # self.sprite = pygame.transform.scale(self.sprite, (car_size_x, car_size_y))
+
+        # 基于 index 生成稳定的“随机颜色”，只给非透明部分上色
+        car_rgb = color_from_index(index)                        # 用上面的取色函数
+        self.sprite = tint_surface_flat(base, car_rgb) # 你现有的“保留 alpha 的上色”函数
         self.rotated_sprite = self.sprite
+
+        self.index = index
 
         self.car_size_x = car_size_x
         self.car_size_y = car_size_y
-        self.radar_max_len = radar_max_len
 
+        # === 字体与编号贴图 ===
+        # 字号按车高比例来，粗体更清晰
+        # font_size = max(14, int(self.car_size_y * 0.55))
+        font_size = 15
+        self._idx_font = pygame.font.SysFont("Arial", font_size, bold=True)
+        # 黑色文字
+        self._idx_surf = self._idx_font.render(str(self.index), True, (0, 0, 0))
+
+        self.radar_max_len = radar_max_len
         self.wheelbase_px = wheelbase_px # 轴距
         self.max_steer_deg = max_steer_deg # 最大前轮转角（物理转向角，不是航向变化）
         self.max_steer_rad =  math.radians(max_steer_deg)
@@ -115,7 +166,11 @@ class Track:
         
 
     def draw(self, screen, car: Car):
+        # screen.blit(car.rotated_sprite, car.position)
         screen.blit(car.rotated_sprite, car.position)
+        label_rect = car._idx_surf.get_rect(center=(int(car.center[0]), int(car.center[1])))
+        screen.blit(car._idx_surf, label_rect)
+
         self.draw_radar(screen, car)
 
     def draw_radar(self, screen, car: Car):
@@ -218,12 +273,13 @@ def run_simulation(genomes, config):
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 
-    for i, g in genomes:
+    for idx, (gid, g) in enumerate(genomes):
         net = neat.nn.FeedForwardNetwork.create(g, config)
         nets.append(net)
         g.fitness = 0.0
 
         car = Car(
+            index=idx,
             car_img=CAR_IMAGE,
             car_size_x=CAR_SIZE_X,
             car_size_y=CAR_SIZE_Y,
