@@ -2,21 +2,17 @@ import math
 
 
 # ===================== 基本设置 =====================
-MAP = 'K1.png'
+MAP = 'K1_Real.png'
 CAR_IMAGE = 'car.png'
 
 MAX_SIM_SECONDS = 25
 FPS = 60
 dt = 1.0 / FPS
 
-# 自行车模型参数（像素为单位）
-WHEELBASE_PX   = 50.0      # 轴距（按你的车图大小和地图比例调）
-MAX_STEER_DEG  = 30.0      # 最大前轮转角（物理转向角，不是航向变化）
-MAX_STEER_RAD  = math.radians(MAX_STEER_DEG)
 
 V_MIN = 2.0
-V_MAX = 5.5
-ACCEL_PER_STEP     = V_MAX / (2 * FPS)    # 2 秒 0->V_MAX, 加速度（每帧速度增长量）。这里设定为“1.65秒内从 0 加到 V_MAX”。
+V_MAX = 4.5
+ACCEL_PER_STEP     = V_MAX / (1.6 * FPS)    # 1.6 秒 0->V_MAX, 加速度（每帧速度增长量）。这里设定为“1.65秒内从 0 加到 V_MAX”。
 
 """
 含义：打满方向（最大转向角）时允许的最低最高速度。
@@ -88,20 +84,31 @@ LIMIT_SMOOTH_ALPHA = 0.4     # 限速的低通平滑（0~1，越大响应越快�
 ALPHA_STEER        = 0.5     # 转向平滑（低通滤波）系数
 
 # 画面/碰撞
-if MAP == "K1.png":
-    TEXT_COLOR   = (255, 255, 255) # k1
+if MAP == "K1_Real.png":
+    WIDTH, HEIGHT = 1920, 1080
+    TEXT_COLOR   = (255, 255, 255)
+    START_POSITION   = [950, 630]
+    STARTING_ANGLE   = 180
+    # 车模型参数（像素为单位）
+    CAR_SIZE_X, CAR_SIZE_Y = 60, 60
+    WHEELBASE_PX   = 50.0      # 轴距（按你的车图大小和地图比例调）
+    MAX_STEER_DEG  = 30.0      # 最大前轮转角（物理转向角，不是航向变化）
+    MAX_STEER_RAD  = math.radians(MAX_STEER_DEG)
+    RADAR_MAX_LEN = 600
+    INPUT_NORMALIZATION_DENOMINATOR = 60 #  RADAR_MAX_LEN/INPUT_NORMALIZATION_DENOMINATOR 我发现不一定输入一定要在 0,1之间，如果限制在0,1之间，车的速度涨的很慢
 else:
+    WIDTH, HEIGHT = 1920, 1080
     TEXT_COLOR   = (0, 0, 0) # other map
-
-# 起始位置：
-if MAP == "K1.png":
-    START_POSITION   = [950, 680]
-else:
     START_POSITION   = [830, 920]
+    STARTING_ANGLE   = 0
+    CAR_SIZE_X, CAR_SIZE_Y = 60, 60
+    WHEELBASE_PX   = 50.0      # 轴距（按你的车图大小和地图比例调）
+    MAX_STEER_DEG  = 30.0      # 最大前轮转角（物理转向角，不是航向变化）
+    MAX_STEER_RAD  = math.radians(MAX_STEER_DEG)
+    RADAR_MAX_LEN = 800
+    INPUT_NORMALIZATION_DENOMINATOR = 80 #  RADAR_MAX_LEN/INPUT_NORMALIZATION_DENOMINATOR 我发现不一定输入一定要在 0,1之间，如果限制在0,1之间，车的速度涨的很慢
 
-WIDTH, HEIGHT = 1920, 1080
-CAR_SIZE_X, CAR_SIZE_Y = 60, 60
+
+PLOT_RADAR = False
 BORDER_COLOR = (255, 255, 255, 255)  # 碰撞的颜色（白色）
 
-RADAR_MAX_LEN = 800
-INPUT_NORMALIZATION_DENOMINATOR = 80 #  RADAR_MAX_LEN/INPUT_NORMALIZATION_DENOMINATOR 我发现不一定输入一定要在 0,1之间，如果限制在0,1之间，车的速度涨的很慢

@@ -22,13 +22,15 @@ from env_settings import (
     ALPHA_STEER,
     TEXT_COLOR,
     START_POSITION,
+    STARTING_ANGLE,
     WIDTH, 
     HEIGHT,
     CAR_SIZE_X, 
     CAR_SIZE_Y,
     BORDER_COLOR,
     RADAR_MAX_LEN,
-    INPUT_NORMALIZATION_DENOMINATOR
+    INPUT_NORMALIZATION_DENOMINATOR,
+    PLOT_RADAR
 )
 
 from car_modular import (
@@ -38,7 +40,7 @@ from car_modular import (
 
 
 # ===================== 单车演示 =====================
-def demo_winner(best_net, config):
+def demo_winner(winner_id, best_net, config):
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
     clock = pygame.time.Clock()
@@ -46,8 +48,11 @@ def demo_winner(best_net, config):
     info_font = pygame.font.SysFont("Arial", 20)
 
     game_map = pygame.image.load(MAP).convert()
+    trail_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)  # 创建轨迹层（带透明通道）
+
 
     car = Car(
+        index=winner_id,
         car_img=CAR_IMAGE,
         car_size_x=CAR_SIZE_X,
         car_size_y=CAR_SIZE_Y,
@@ -57,7 +62,7 @@ def demo_winner(best_net, config):
         radar_max_len=RADAR_MAX_LEN,
         v_min=V_MIN,
         v_max=V_MAX,
-        start_facing_angle=180
+        start_facing_angle=STARTING_ANGLE
     )
 
 
@@ -116,7 +121,7 @@ def demo_winner(best_net, config):
         car.speed = max(car.v_min, min(car.v_max, car.speed))
 
         # 物理 & 碰撞
-        car.update(game_map)
+        track.update(game_map, car=car)
         if not car.is_alive():
             running = False
 
@@ -125,13 +130,21 @@ def demo_winner(best_net, config):
             running = False
 
         # 绘制
+        if not hasattr(car, "trail"):
+            car.trail = []
+        car.trail.append((int(car.center[0]), int(car.center[1])))
+        if len(car.trail) > 1:
+            pygame.draw.line(trail_surf, (255, 255, 255, 255), car.trail[-2], car.trail[-1], 2)
+
         screen.blit(game_map, (0, 0))
-        track.draw(screen, car=car)
+        screen.blit(trail_surf, (0, 0))
+
+        track.draw(screen, car=car, draw_radar=PLOT_RADAR)
 
         # HUD
-        text = generation_font.render("Winner Demo", True, TEXT_COLOR)
-        r = text.get_rect(); r.center = (900, 420)
-        screen.blit(text, r)
+        # text = generation_font.render("Winner Demo", True, TEXT_COLOR)
+        # r = text.get_rect(); r.center = (900, 420)
+        # screen.blit(text, r)
 
         elapsed_seconds = counter / FPS
         hud_lines = [
@@ -140,7 +153,7 @@ def demo_winner(best_net, config):
             f"V_limit: {v_limit:.2f}",
             f"Steer cmd: {steer_cmd:.2f}",
         ]
-        y = 460
+        y = 420
         for line in hud_lines:
             t = info_font.render(line, True, TEXT_COLOR)
             rect = t.get_rect(); rect.center = (900, y)
@@ -170,4 +183,4 @@ if __name__ == "__main__":
     best_net = neat.nn.FeedForwardNetwork.create(winner, config)
 
     # 跑可视化演示
-    demo_winner(best_net, config)
+    demo_winner(winner.key, best_net, config)

@@ -21,13 +21,15 @@ from env_settings import (
     ALPHA_STEER,
     TEXT_COLOR,
     START_POSITION,
+    STARTING_ANGLE,
     WIDTH, 
     HEIGHT,
     CAR_SIZE_X, 
     CAR_SIZE_Y,
     BORDER_COLOR,
     RADAR_MAX_LEN,
-    INPUT_NORMALIZATION_DENOMINATOR
+    INPUT_NORMALIZATION_DENOMINATOR,
+    PLOT_RADAR
 )
 
 
@@ -128,6 +130,7 @@ class Car:
 
         self.distance = 0.0  # 行驶距离（像素）
         self.time = 0        # 生存帧数
+        self.trail = []
 
         self.radar_angles = list(range(-90, 120, 45))
 
@@ -165,13 +168,13 @@ class Track:
         self.border_color = border_color
         
 
-    def draw(self, screen, car: Car):
+    def draw(self, screen, car: Car, draw_radar: bool=False):
         # screen.blit(car.rotated_sprite, car.position)
         screen.blit(car.rotated_sprite, car.position)
         label_rect = car._idx_surf.get_rect(center=(int(car.center[0]), int(car.center[1])))
         screen.blit(car._idx_surf, label_rect)
-
-        self.draw_radar(screen, car)
+        if draw_radar:
+            self.draw_radar(screen, car)
 
     def draw_radar(self, screen, car: Car):
         for radar in car.radars:
@@ -271,7 +274,7 @@ def run_simulation(genomes, config):
     cars = []
 
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((WIDTH, HEIGHT)) # , pygame.FULLSCREEN)
 
     for idx, (gid, g) in enumerate(genomes):
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -279,7 +282,7 @@ def run_simulation(genomes, config):
         g.fitness = 0.0
 
         car = Car(
-            index=idx,
+            index=gid, # gid 是完全对应某一辆车 跨代不变的标识
             car_img=CAR_IMAGE,
             car_size_x=CAR_SIZE_X,
             car_size_y=CAR_SIZE_Y,
@@ -289,7 +292,7 @@ def run_simulation(genomes, config):
             radar_max_len=RADAR_MAX_LEN,
             v_min=V_MIN,
             v_max=V_MAX,
-            start_facing_angle=180
+            start_facing_angle=STARTING_ANGLE
         )
         cars.append(car)
 
@@ -371,7 +374,7 @@ def run_simulation(genomes, config):
         screen.blit(game_map, (0, 0))
         for car in cars:
             if car.is_alive():
-                track.draw(screen, car=car)
+                track.draw(screen, car=car, draw_radar=PLOT_RADAR)
 
         text = generation_font.render(f"Generation: {current_generation}", True, TEXT_COLOR)
         text_rect = text.get_rect()
@@ -407,11 +410,23 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
 
-    winner = population.run(run_simulation, 1000)   # 返回当代里 fitness 最高的基因组
+    winner = population.run(run_simulation, 3)   # 返回当代里 fitness 最高的基因组
 
     import pickle
     with open("winner.pkl", "wb") as f:
         pickle.dump(winner, f)
+
+
+    # 从 stats 中获取所有历史最优个体（每代的最高 fitness）
+    all_best_genomes = stats.most_fit_genomes
+
+    # 1️⃣ 按 fitness 排序，取前 N
+    N = 15
+    topN = sorted(all_best_genomes, key=lambda g: g.fitness, reverse=True)[:N]
+
+    # 2️⃣ 保存前 N 个个体
+    with open("topN_genomes.pkl", "wb") as f:
+        pickle.dump(topN, f)
 
     # # 需要时加载
     # with open("winner.pkl", "rb") as f:
