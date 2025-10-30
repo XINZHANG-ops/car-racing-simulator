@@ -13,6 +13,7 @@ from env_settings import (
     MAX_STEER_DEG,
     V_MIN, 
     V_MAX,
+    SPEED_NORM,
     ACCEL_PER_STEP,
     V_TURN_FLOOR,
     TURN_EXP,
@@ -135,11 +136,13 @@ class Car:
 
         self.radar_angles = list(range(-90, 120, 45))
 
-    def get_data(self, normalization_denominator: int=30):
+    def get_data(self, normalization_denominator: int=30, speed_norm: float=4.5):
         radars = self.radars
-        ret = [0] * len(self.radar_angles)
+        input_size = len(self.radar_angles) # + 1
+        ret = [0] * input_size
         for i, radar in enumerate(radars):
             ret[i] = int(radar[1] / normalization_denominator)
+        # ret[-1] = self.speed / speed_norm
         return ret
     
     def is_alive(self):
@@ -238,7 +241,7 @@ class Track:
             self.check_radar(game_map, d, car)
 
     def get_reward(self, car: Car):
-        return car.distance / (car.car_size_x / 2)
+        return (car.distance / (car.car_size_x / 2)) / car.time
 
     def rotate_center(self, image, angle):
         rectangle = image.get_rect()
@@ -275,8 +278,8 @@ def run_simulation(genomes, config):
     cars = []
 
     pygame.init()
-    # screen = pygame.display.set_mode((WIDTH, HEIGHT)) # , pygame.FULLSCREEN)
-    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((WIDTH, HEIGHT)) # , pygame.FULLSCREEN)
+    # screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
 
     for idx, (gid, g) in enumerate(genomes):
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -315,7 +318,7 @@ def run_simulation(genomes, config):
 
         # —— 行为与动力学 —— #
         for i, car in enumerate(cars):
-            steer_cmd, accel_cmd = nets[i].activate(car.get_data(INPUT_NORMALIZATION_DENOMINATOR))  # 输出2维：转向, 加速度
+            steer_cmd, accel_cmd = nets[i].activate(car.get_data(INPUT_NORMALIZATION_DENOMINATOR, SPEED_NORM))  # 输出2维：转向, 加速度
             steer_cmd = max(-1.0, min(1.0, steer_cmd))
             accel_cmd = max(-1.0, min(1.0, accel_cmd))
 
@@ -414,16 +417,25 @@ if __name__ == "__main__":
 
     winner = population.run(run_simulation, 1000)   # 返回当代里 fitness 最高的基因组
 
-    import pickle
+    import pickle, copy
+    # —— 保存全局最优 winner —— 
     with open("winner.pkl", "wb") as f:
         pickle.dump(winner, f)
 
+    # —— 从 stats 拿每代最优，然后：深拷贝、去重（同 key 取最高 fitness）、再取前 N —— 
+    raw_best = [g for g in stats.most_fit_genomes if g is not None]
 
-    # 从 stats 中获取所有历史最优个体（每代的最高 fitness）
-    all_best_genomes = stats.most_fit_genomes
+    # 去重：同一 key 只保留 fitness 最高的那个
+    best_by_key = {}
+    for g in raw_best:
+        if (g.key not in best_by_key) or (g.fitness > best_by_key[g.key].fitness):
+            best_by_key[g.key] = g
+    # 深拷贝，避免后续引用问题
+    dedup_copies = [copy.deepcopy(g) for g in best_by_key.values()]
 
     # 1️⃣ 按 fitness 排序，取前 N
-    topN = sorted(all_best_genomes, key=lambda g: g.fitness, reverse=True)[:TOP_N_GENO]
+    # 排序取前 N
+    topN = sorted(dedup_copies, key=lambda g: g.fitness, reverse=True)[:TOP_N_GENO]
 
     # 2️⃣ 保存前 N 个个体
     with open("topN_genomes.pkl", "wb") as f:

@@ -5,13 +5,14 @@ import math
 MAP = 'K1_Real.png'
 CAR_IMAGE = 'car.png'
 
-MAX_SIM_SECONDS = 25
+MAX_SIM_SECONDS = 250
 FPS = 60
 dt = 1.0 / FPS
 
 
-V_MIN = 2.0
+V_MIN = 2
 V_MAX = 4.5
+SPEED_NORM = 0.2
 ACCEL_PER_STEP     = V_MAX / (1.6 * FPS)    # 1.6 秒 0->V_MAX, 加速度（每帧速度增长量）。这里设定为“1.65秒内从 0 加到 V_MAX”。
 
 """

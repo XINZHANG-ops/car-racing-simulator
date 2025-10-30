@@ -14,6 +14,7 @@ from env_settings import (
     MAX_STEER_DEG,
     V_MIN, 
     V_MAX,
+    SPEED_NORM,
     ACCEL_PER_STEP,
     V_TURN_FLOOR,
     TURN_EXP,
@@ -89,7 +90,7 @@ def demo_winner(winner_id, best_net, config):
             running = False
 
         # 网络输出
-        steer_cmd, accel_cmd = best_net.activate(car.get_data(INPUT_NORMALIZATION_DENOMINATOR))
+        steer_cmd, accel_cmd = best_net.activate(car.get_data(INPUT_NORMALIZATION_DENOMINATOR, SPEED_NORM))
         steer_cmd = max(-1.0, min(1.0, steer_cmd))
         accel_cmd = max(-1.0, min(1.0, accel_cmd))
 
@@ -134,7 +135,10 @@ def demo_winner(winner_id, best_net, config):
             car.trail = []
         car.trail.append((int(car.center[0]), int(car.center[1])))
         if len(car.trail) > 1:
-            pygame.draw.line(trail_surf, (255, 255, 255, 255), car.trail[-2], car.trail[-1], 2)
+            if accel_cmd >= 0.0:
+                pygame.draw.line(trail_surf, (255, 255, 255, 255), car.trail[-2], car.trail[-1], 2)
+            else:
+                pygame.draw.line(trail_surf, (255, 0, 0, 255), car.trail[-2], car.trail[-1], 2)
 
         screen.blit(game_map, (0, 0))
         screen.blit(trail_surf, (0, 0))

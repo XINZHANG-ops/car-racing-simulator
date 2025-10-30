@@ -16,6 +16,7 @@ from env_settings import (
     MAX_STEER_DEG,
     V_MIN, 
     V_MAX,
+    SPEED_NORM,
     ACCEL_PER_STEP,
     V_TURN_FLOOR,
     TURN_EXP,
@@ -126,7 +127,7 @@ def demo_topN(genomes: List[neat.genome.DefaultGenome], config):
             if not car.is_alive():
                 continue
 
-            steer_cmd, accel_cmd = nets[i].activate(car.get_data(INPUT_NORMALIZATION_DENOMINATOR))
+            steer_cmd, accel_cmd = nets[i].activate(car.get_data(INPUT_NORMALIZATION_DENOMINATOR, SPEED_NORM))
             steer_cmd = max(-1.0, min(1.0, steer_cmd))
             accel_cmd = max(-1.0, min(1.0, accel_cmd))
 
@@ -214,7 +215,7 @@ if __name__ == "__main__":
                                 config_path)
 
     # 先尝试加载 topN；失败则退回 winner
-    genomes = load_topN_genomes("topN_genomes.pkl", "winner.pkl")
+    genomes = load_topN_genomes("topN_genomes.pkl", "winner.pkl")[:10]
 
     # 如果 topN.pkl 里是（每代topN那种）二维结构，可在这里拍平：
     # if genomes and isinstance(genomes[0], list):
