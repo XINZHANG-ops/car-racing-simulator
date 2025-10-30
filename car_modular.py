@@ -29,7 +29,8 @@ from env_settings import (
     BORDER_COLOR,
     RADAR_MAX_LEN,
     INPUT_NORMALIZATION_DENOMINATOR,
-    PLOT_RADAR
+    PLOT_RADAR,
+    TOP_N_GENO
 )
 
 
@@ -274,7 +275,8 @@ def run_simulation(genomes, config):
     cars = []
 
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT)) # , pygame.FULLSCREEN)
+    # screen = pygame.display.set_mode((WIDTH, HEIGHT)) # , pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
 
     for idx, (gid, g) in enumerate(genomes):
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -410,7 +412,7 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
 
-    winner = population.run(run_simulation, 3)   # 返回当代里 fitness 最高的基因组
+    winner = population.run(run_simulation, 1000)   # 返回当代里 fitness 最高的基因组
 
     import pickle
     with open("winner.pkl", "wb") as f:
@@ -421,19 +423,8 @@ if __name__ == "__main__":
     all_best_genomes = stats.most_fit_genomes
 
     # 1️⃣ 按 fitness 排序，取前 N
-    N = 15
-    topN = sorted(all_best_genomes, key=lambda g: g.fitness, reverse=True)[:N]
+    topN = sorted(all_best_genomes, key=lambda g: g.fitness, reverse=True)[:TOP_N_GENO]
 
     # 2️⃣ 保存前 N 个个体
     with open("topN_genomes.pkl", "wb") as f:
         pickle.dump(topN, f)
-
-    # # 需要时加载
-    # with open("winner.pkl", "rb") as f:
-    #     winner = pickle.load(f)
-
-    # # 用它构建可执行网络（推理）
-    # best_net = neat.nn.FeedForwardNetwork.create(winner, config)
-
-    # # 之后你可以在一个“评估/演示”循环里只跑这一个网络：
-    # # obs = car.get_data(); action = best_net.activate(obs); …（不再进化）

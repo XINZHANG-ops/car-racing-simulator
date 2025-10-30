@@ -112,3 +112,4 @@ else:
 PLOT_RADAR = False
 BORDER_COLOR = (255, 255, 255, 255)  # 碰撞的颜色（白色）
 
+TOP_N_GENO = 100
