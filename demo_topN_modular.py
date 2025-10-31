@@ -36,7 +36,10 @@ from env_settings import (
     PLOT_RADAR,
 )
 
-from car_modular import Car, Track
+from src.my_env import (
+    Car,
+    Track
+)
 
 
 # ============ 工具：从文件加载基因组 ============
@@ -67,7 +70,6 @@ def demo_topN(genomes: List[neat.genome.DefaultGenome], config):
     title_font = pygame.font.SysFont("Arial", 28)
 
     # 赛道与底图
-    game_map = pygame.image.load(MAP).convert()
     track = Track(
         map=MAP,
         map_width=WIDTH,
@@ -131,32 +133,11 @@ def demo_topN(genomes: List[neat.genome.DefaultGenome], config):
             steer_cmd = max(-1.0, min(1.0, steer_cmd))
             accel_cmd = max(-1.0, min(1.0, accel_cmd))
 
-            # 转向平滑 + 自行车模型
-            car._steer_smoothed = car._steer_smoothed * (1 - ALPHA_STEER) + steer_cmd * ALPHA_STEER
-            delta = car._steer_smoothed * car.max_steer_rad
-            psi_dot = (car.speed / car.wheelbase_px) * math.tan(delta)
-            car.angle = (car.angle + math.degrees(psi_dot)) % 360.0
-
-            # 动态限速 + 平滑
-            v_limit_inst = track.turn_speed_limit(car=car)
-            car._vlimit_smooth = (1 - track.limit_smooth_alpha) * getattr(car, "_vlimit_smooth", car.v_max) \
-                                 + track.limit_smooth_alpha * v_limit_inst
-            v_limit = car._vlimit_smooth
-
-            # 速度
-            if accel_cmd >= 0.0:
-                car.speed += ACCEL_PER_STEP * accel_cmd
-                car.speed = min(car.speed, car.v_max)
-            else:
-                car.speed += ACCEL_PER_STEP * accel_cmd
-                car.speed = max(car.v_min, car.speed)
-
-            if car.speed > v_limit:
-                car.speed = max(v_limit, car.speed - BRAKE_PER_STEP)
-            car.speed = max(car.v_min, min(car.v_max, car.speed))
-
-            # 位置/雷达/碰撞
-            track.update(game_map, car=car)
+            track.update_car_kinematics(
+                car,
+                steer_cmd,
+                accel_cmd
+            )
             if car.is_alive():
                 still_alive += 1
 
@@ -172,7 +153,7 @@ def demo_topN(genomes: List[neat.genome.DefaultGenome], config):
             running = False
 
         # == 渲染 ==
-        screen.blit(game_map, (0, 0))
+        screen.blit(track.map_surface, (0, 0))
         # 先把所有轨迹层贴上来
         for t in trails:
             screen.blit(t, (0, 0))
@@ -180,7 +161,7 @@ def demo_topN(genomes: List[neat.genome.DefaultGenome], config):
         # 再画车（车会盖在轨迹上）
         for car in cars:
             if car.is_alive():
-                track.draw(screen, car=car, draw_radar=PLOT_RADAR)
+                track.draw_car(screen, car=car, plot_radar=PLOT_RADAR)
 
         # HUD
         elapsed_seconds = counter / FPS

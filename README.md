@@ -1,3 +1,5 @@
+env: F:\python\CondaEnvs\CarSimulator
+
 python car_modular.py  训练
 
 训练完后

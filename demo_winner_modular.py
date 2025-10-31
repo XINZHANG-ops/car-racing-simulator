@@ -34,7 +34,7 @@ from env_settings import (
     PLOT_RADAR
 )
 
-from car_modular import (
+from src.my_env import (
     Car,
     Track
 )
@@ -48,9 +48,7 @@ def demo_winner(winner_id, best_net, config):
     generation_font = pygame.font.SysFont("Arial", 30)
     info_font = pygame.font.SysFont("Arial", 20)
 
-    game_map = pygame.image.load(MAP).convert()
     trail_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)  # 创建轨迹层（带透明通道）
-
 
     car = Car(
         index=winner_id,
@@ -65,7 +63,6 @@ def demo_winner(winner_id, best_net, config):
         v_max=V_MAX,
         start_facing_angle=STARTING_ANGLE
     )
-
 
     track = Track(
         map=MAP,
@@ -94,35 +91,12 @@ def demo_winner(winner_id, best_net, config):
         steer_cmd = max(-1.0, min(1.0, steer_cmd))
         accel_cmd = max(-1.0, min(1.0, accel_cmd))
 
-        # 转向平滑 + 前轮转角
-        car._steer_smoothed = car._steer_smoothed * (1 - ALPHA_STEER) + steer_cmd * ALPHA_STEER
-        delta = car._steer_smoothed * car.max_steer_rad
-
-        # 航向更新（Kinematic Bicycle）
-        psi_dot = (car.speed / car.wheelbase_px) * math.tan(delta)  # rad/frame
-        car.angle = (car.angle + math.degrees(psi_dot)) % 360.0
-
-        # 动态限速 + 平滑
-        v_limit_inst = track.turn_speed_limit(car=car)
-        car._vlimit_smooth = (1 - track.limit_smooth_alpha) * getattr(car, "_vlimit_smooth", car.v_max) \
-                        + track.limit_smooth_alpha * v_limit_inst
-        v_limit = car._vlimit_smooth
-
-        # 速度更新
-        if accel_cmd >= 0.0:
-            car.speed += ACCEL_PER_STEP * accel_cmd
-            car.speed = min(car.speed, car.v_max)
-        else:
-            car.speed += ACCEL_PER_STEP * accel_cmd
-            car.speed = max(car.v_min, car.speed)
-
-        if car.speed > v_limit:
-            car.speed = max(v_limit, car.speed - BRAKE_PER_STEP)
-
-        car.speed = max(car.v_min, min(car.v_max, car.speed))
-
         # 物理 & 碰撞
-        track.update(game_map, car=car)
+        track.update_car_kinematics(
+                car,
+                steer_cmd,
+                accel_cmd
+            )
         if not car.is_alive():
             running = False
 
@@ -140,10 +114,10 @@ def demo_winner(winner_id, best_net, config):
             else:
                 pygame.draw.line(trail_surf, (255, 0, 0, 255), car.trail[-2], car.trail[-1], 2)
 
-        screen.blit(game_map, (0, 0))
+        screen.blit(track.map_surface, (0, 0))
         screen.blit(trail_surf, (0, 0))
 
-        track.draw(screen, car=car, draw_radar=PLOT_RADAR)
+        track.draw_car(screen, car=car, plot_radar=PLOT_RADAR)
 
         # HUD
         # text = generation_font.render("Winner Demo", True, TEXT_COLOR)
@@ -154,7 +128,7 @@ def demo_winner(winner_id, best_net, config):
         hud_lines = [
             f"Time: {elapsed_seconds:.1f} s",
             f"Speed: {car.speed:.2f} px/frame",
-            f"V_limit: {v_limit:.2f}",
+            f"V_limit: {car._vlimit_smooth:.2f}",
             f"Steer cmd: {steer_cmd:.2f}",
         ]
         y = 420
