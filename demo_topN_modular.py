@@ -196,7 +196,7 @@ if __name__ == "__main__":
                                 config_path)
 
     # 先尝试加载 topN；失败则退回 winner
-    genomes = load_topN_genomes("topN_genomes.pkl", "winner.pkl")[:10]
+    genomes = load_topN_genomes("topN_genomes.pkl", "winner.pkl")[:5]
 
     # 如果 topN.pkl 里是（每代topN那种）二维结构，可在这里拍平：
     # if genomes and isinstance(genomes[0], list):

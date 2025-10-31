@@ -5,7 +5,7 @@ import math
 MAP = 'maps\\K1_Real.png'
 CAR_IMAGE = 'car.png'
 
-MAX_SIM_SECONDS = 25
+MAX_SIM_SECONDS = 2500
 FPS = 60
 dt = 1.0 / FPS
 
@@ -110,7 +110,7 @@ else:
     INPUT_NORMALIZATION_DENOMINATOR = 80 #  RADAR_MAX_LEN/INPUT_NORMALIZATION_DENOMINATOR 我发现不一定输入一定要在 0,1之间，如果限制在0,1之间，车的速度涨的很慢
 
 
-PLOT_RADAR = True
+PLOT_RADAR = False
 BORDER_COLOR = (255, 255, 255, 255)  # 碰撞的颜色（白色）
 
 TOP_N_GENO = 100

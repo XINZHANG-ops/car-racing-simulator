@@ -1,0 +1,159 @@
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytestdebug.log
+
+# Translations
+*.mo
+*.pot
+
+# Django / Flask stuff
+*.log
+local_settings.py
+db.sqlite3
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+doc/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.nbconvert.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pyright / mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# ===============================
+# IDEs / Editors
+# ===============================
+# VS Code
+.vscode/
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# PyCharm
+.idea/
+*.iml
+
+# JupyterLab settings
+.jupyter/lab/workspaces/
+
+# ===============================
+# OS generated files
+# ===============================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS (if cross-used)
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ===============================
+# Git
+# ===============================
+# Ignore any temporary merge or rebase files
+*.orig
+*.rej
+
+# ===============================
+# Custom Project Files (optional)
+# ===============================
+# Logs
+logs/
+*.log
+
+# Temporary data
+tmp/
+temp/
+cache/
+*.bak
+
+# ===============================
+# Environment specific
+# ===============================
+# dotenv files (you can comment this if you want them tracked)
+.env.local
+.env.development
+.env.production
+.env.test

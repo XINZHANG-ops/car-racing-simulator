@@ -34,33 +34,6 @@ from env_settings import (
     PLOT_RADAR,           # 画不画雷达
 )
 
-# ============ 小工具 ============
-def tint_surface_flat(src: pygame.Surface, rgb):
-    """只改非透明像素的RGB为给定颜色，保留 alpha。"""
-    tinted = src.copy()
-    px = pygame.PixelArray(tinted)
-    w, h = tinted.get_size()
-    for y in range(h):
-        for x in range(w):
-            a = px.surface.get_at((x, y)).a
-            if a != 0:
-                px[x, y] = (rgb[0], rgb[1], rgb[2], a)
-    del px
-    return tinted
-
-def color_from_index(idx: int, sat=92, val=92):
-    """黄金角打散色相，避免太暗。"""
-    c = pygame.Color(0, 0, 0, 255)
-    hue = (idx * 137.5) % 360
-    c.hsva = (hue, sat, val, 100)
-    r, g, b = c.r, c.g, c.b
-    if (r + g + b) < 80:
-        c.hsva = (hue, sat, 95, 100)
-        r, g, b = c.r, c.g, c.b
-    return (r, g, b)
-
-
-
 # ============ 主程序：键盘驾驶 ============
 def main():
     pygame.init()
