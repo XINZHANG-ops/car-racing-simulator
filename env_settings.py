@@ -2,7 +2,7 @@ import math
 
 
 # ===================== 基本设置 =====================
-MAP = 'K1_Real.png'
+MAP = 'maps\\K1_Real.png'
 CAR_IMAGE = 'car.png'
 
 MAX_SIM_SECONDS = 25
@@ -85,7 +85,7 @@ LIMIT_SMOOTH_ALPHA = 0.4     # 限速的低通平滑（0~1，越大响应越快�
 ALPHA_STEER        = 0.5     # 转向平滑（低通滤波）系数
 
 # 画面/碰撞
-if MAP == "K1_Real.png":
+if "K1_Real.png" in MAP:
     WIDTH, HEIGHT = 1920, 1080
     TEXT_COLOR   = (255, 255, 255)
     START_POSITION   = [950, 630]
